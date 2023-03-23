@@ -113,6 +113,13 @@ SQLLAB_CTAS_NO_LIMIT = True
 
 PUBLIC_ROLE_LIKE = "Gamma"
 
+APP_NAME = "UHasselt"
+APP_ICON = "https://www.uhasselt.be/media/dvijqpql/uhasselt-liggend.jpg?width=307&height=73&mode=max"
+APP_ICON_WIDTH = 200
+LOGO_TARGET_PATH = None
+LOGO_TOOLTIP = ""
+FAVICONS = [{"href": "https://www.uhasselt.be//media/ipqjpjbk/favicon_uhasselt.jpg?width=128&height=128"}]
+
 #
 # Optionally import superset_config_docker.py (which will have been included on
 # the PYTHONPATH) in order to allow for local settings to be overridden
