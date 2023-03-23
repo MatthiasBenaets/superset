@@ -18,6 +18,7 @@ x-superset-image: &superset-image apache/superset:${TAG:-latest-dev}
 x-superset-depends-on: &superset-depends-on
   - db
   - redis
+  - mysql
 x-superset-volumes: &superset-volumes
   # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
   - ./docker:/app/docker
@@ -86,6 +87,14 @@ services:
     volumes: *superset-volumes
     healthcheck:
       disable: true
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    env_file: docker/.env-non-dev
+    restart: unless-stopped
+    volumes:
+      - ../mysql:/var/lib/mysql
 
 volumes:
   redis:
