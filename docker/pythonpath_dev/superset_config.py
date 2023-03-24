@@ -100,6 +100,7 @@ class CeleryConfig(object):
 
 CELERY_CONFIG = CeleryConfig
 
+# Make dashboards embeddable (via api token)
 FEATURE_FLAGS = {
     "ALERT_REPORTS": True,
     "EMBEDDED_SUPERSET": True
@@ -111,8 +112,10 @@ WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
 
 SQLLAB_CTAS_NO_LIMIT = True
 
+# Give Public role the same rights as the Gamma role
 PUBLIC_ROLE_LIKE = "Gamma"
 
+# Branding
 APP_NAME = "UHasselt"
 APP_ICON = "https://www.uhasselt.be/media/dvijqpql/uhasselt-liggend.jpg?width=307&height=73&mode=max"
 APP_ICON_WIDTH = 200

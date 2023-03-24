@@ -1,0 +1,101 @@
+#+title: Notes
+
+** Building
+- There are 2 ways to easily build and start the container:
+  - Development: ~docker compose up~
+  - Non-development (production): ~docker compose -f docker-compose-non-dev up~
+- The initail build can take some time. Whenever step 4 out of 4 is completed, it's safe to assume the container is ready to be used.
+  - When using the development build, it's possible the ~superset_node~ container will crash out due to limited resources. This can be solved by changing the memory limit in the ~docker-compose.yml~ file. Another option is to just try ~$ docker-compose up -d superset-node~.
+
+** Embedding
+- Being able to embed charts is quite useful. This way, it's possible to completely seperate the configuration/design of the dashboard from the website.
+- There are multiple ways to embed:
+  - Charts: Open the chart, click the meatball menu, select share and embed code. This will give the required iframe code.
+  - Dashboard:
+    - With the embedded SDK, using an api guest token (https://www.npmjs.com/package/@superset-ui/embedded-sdk). This will require the feature to be enabled.
+    - Using a standalone link, load the dashboard and copy part of the link (https://<url>/superset/dashboard/<number>/?) and add a standalone level. The most recommended level for production is probably 3. This link can then be embedded. More info here: https://superset.apache.org/docs/creating-charts-dashboards/creating-your-first-dashboard/#customizing-dashboard
+- Note, using the iframe and standalone link still requires the public role to have access to the charts. Otherwise the embed will prompt you to log in.
+
+** Configuration
+- By default, Superset uses the ~/superset/config.py~ settings, but these settings/variables are overwritten by ~/docker/pythonpath_dev/superset_config.py~.
+- Some changes being made here:
+  - Enabling feature flag ~EMBEDDED_SUPERSET~. This will make it possible to generate an ID that can be used by the SDK. This is not required when using the standalone link.
+  - Giving the Public role the same privileges as Gamma. This will make it so the Public role does not require to log in to view charts (and solves the issue with being prompted to log in). Note that this role still needs access to the datasource/dataset itself, before the chart/dashboard will actually load.
+
+#+begin_src yaml
+FEATURE_FLAG = {
+  "EMBEDDED_SUPERSET": True
+}
+PUBLIC_ROLE_LIKE = "Gamma"
+#+end_src
+
+*** Branding
+*this is refering to the superset webUI, not the dashboard*
+- Without creating a custom image ([[https://medium.com/@supreethmc/superset-customization-of-the-logo-within-a-docker-container-eccff32a6e39][ref]]), branding isn't really useful.
+- When running the non-dev version, assets can be replace inside the container (see ref). This will not always work, and often a ~$ docker compose up -d --force-recreate~ is required. The problem is that docker containers are immutable, meaning no changes will be saved.
+- Alternatively, in the dev version, assets can be changed in ~/superset-frontend~. Again, this will require a complete rebuild. This can be problematic due to the node npm memory issue mentioned earlier.
+- Luckily minimal customization is possible in any version via ~superset_config.py~:
+
+#+begin_src  yaml
+APP_NAME = "UHasselt"  # Browser tab name
+APP_ICON = "https://www.uhasselt.be/media/dvijqpql/uhasselt-liggend.jpg?width=307&height=73&mode=max" # Image icon top left
+APP_ICON_WIDTH = 200
+LOGO_TARGET_PATH = None # Path which will be loaded when clicked. None = no click. /superset/welcome/ = Home
+LOGO_TOOLTIP = "" # Custom tooltip when hovering
+FAVICONS = [{"href": "https://www.uhasselt.be//media/ipqjpjbk/favicon_uhasselt.jpg?width=128&height=128"}] # Custom favicon
+#+end_src
+
+*** Environment
+- Other than using ~superset_config.py~, some aspect of Superset can be configured through Docker's environmental variables. These are different for dev and non-dev versions. The ~.env~ files can be found under ~/docker/~.
+- Some useful docker environment variables (that can also be declared in ~superset_config.py~ wihtout "SUPERSET_"):
+  - ~SUPERSET_LOAD_EXAMPLES=no~; Load dummy datasets/charts/dashboards or not
+  - ~SUPERSET_SECRET_KEY=x~; For session cookie, encrypting data; recommended to change this.
+  - ~SUPERSET_CONFIG_PATH=/~; Custom path to where ~superset_config.py~ should be stored in the container (can be mounted to local file)
+- Some other variable that can be used in ~superset_config.py~
+  - ~SQLALCHEMY_DATABASE_URI = 'sqlite:////path/to/superset.db'~; If all the Superset data need to be stored on another database, the new path can be given here.
+
+** Users and Roles
+- Users:
+  - By default, an admin account is created to manage the Superset WebUI. It looks like it gets created with ~/docker/docker-init.sh~, and can be edited here.
+  - Other users logins with specific role can be created.
+- Roles:
+  - There are a couple roles available from the start, these can be altered and new roles can be created. More info about the roles can be found [[https://superset.apache.org/docs/security/][here]].
+  - For embedding charts and dashboard, it is recommended to edit the public role, so anonymous users don't not need to log in to get access to specific charts. Whenever a dataset is created, the user role can be granted access to these charts. If the Public role is allowed to access all data it's also possible to just add permission for ~all datasource access on all_datasource_access~ and ~all database access on all_database_access~.
+
+** Data management
+
+- The docker compose files have been edited to save all data locally instead of a docker volume. The data will be stored one directory up:
+  - ~../data/superset/superset_home~; sqllab
+  - ~../data/postgresql/data~; metadata superset
+  - ~../mysql/~; general database
+- The reason why this data is stored locally and mounted by the container is because it's a bit easier to manager over docker volumes. Arguably it's also easier to migrate data between hosts (if needed) compared to docker volumes.
+- The data is stored one directory up because the Superset files are part of a git repo.
+
+*** Database
+- Superset uses PostgreSQL for saving all metadata from the webUI.
+  - This can be changed to any other database, using the variable mention earlier.
+- MySQL is used over PostgreSQL for storing all the datasets because it faster, more stable and overal easier to manage. Other databases can ofcourse be used. Ideally it would be better just directly connect to a remote database using SQLAlchemy and a given link.
+  - Superset allows your to upload CSVs and Excel files. Dataset can be created this way or even overwritten. This means, as long as the formatting stays the same, you can periodically upload a new Excel file that overwrites the old data and this will then automatically update the charts and dashboard. This feature does need to be enabled on the database itself. Under "Database Connections", edit the database, select "Advanced", and "Security". Enable ~Allow file uploads to database~. This option is not visible when initially connecting to the database.
+
+*** Migrate data
+- Since most data is stored locally in one directory, it's pretty easy to just create a tarball and extract the data on another host.
+- The data can be compressed with ~$ tar -czvpf <name>.tar.gz <directory>~ and extracted with ~$ tar -xvpf <name>.tar.gz~.
+- PostgreSQL and MySQL might use avahi as the owner of the files. If this user does not exist on the new host, just do a quick ~useradd avahi~
+
+** Customization
+- Superset provides 60 different chart types out of the box which are very customizable. Metrics, dimensions, filters, sorting, limits and more can be used to visualise data. Many charts also have seperate customization menus where color, order, axis, orientations and more can be changed. Superset also allows SQL expressions. This means you have even more control over how data is grouped and visualized.
+- It should be possible to import or develop other charts using custom viz plugins.
+- Charts can be used to build out a dashboard. On this dashboard, charts can be place and arranged. A global filter can also set for the dashboard.
+- The CSS of these dashboards can also be changed to your liking. A basic example with a few tweaks that are pretty much a requirement when making the dashboard public:
+
+#+begin_src css
+body {
+  background-color: black;
+} /* not required but dark mode */
+.header-controls > span {
+  display:none;
+} /* disable the hamburger menu per chart */
+.header-title{
+  pointer-events: none;
+} /*disable menu editor being clickable */
+#+end_src

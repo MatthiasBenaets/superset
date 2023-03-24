@@ -111,6 +111,7 @@ services:
     env_file: docker/.env
     depends_on: *superset-depends-on
     volumes: *superset-volumes
+    # Bump memory limit, still not a garantee all node package will build. If not, do another docker compose up
     deploy:
       resources:
         limits:
@@ -164,7 +165,7 @@ services:
   mysql:
     image: mysql:5.7
     container_name: mysql
-    env_file: docker/.env-non-dev
+    env_file: docker/.env
     restart: unless-stopped
     volumes:
       - ../mysql:/var/lib/mysql
