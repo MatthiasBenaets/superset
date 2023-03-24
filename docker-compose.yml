@@ -111,6 +111,10 @@ services:
     env_file: docker/.env
     depends_on: *superset-depends-on
     volumes: *superset-volumes
+    deploy:
+      resources:
+        limits:
+          memory: 16384M
 
   superset-worker:
     image: *superset-image
