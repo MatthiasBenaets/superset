@@ -18,9 +18,16 @@
 
 ** Configuration
 - By default, Superset uses the ~/superset/config.py~ settings, but these settings/variables are overwritten by ~/docker/pythonpath_dev/superset_config.py~.
+  - Edits made in this file will often require a reinitialization in the container (~$ docker exec -it superset_app sh~), dont with ~$ superset init~.
 - Some changes being made here:
   - Enabling feature flag ~EMBEDDED_SUPERSET~. This will make it possible to generate an ID that can be used by the SDK. This is not required when using the standalone link.
   - Giving the Public role the same privileges as Gamma. This will make it so the Public role does not require to log in to view charts (and solves the issue with being prompted to log in). Note that this role still needs access to the datasource/dataset itself, before the chart/dashboard will actually load.
+  - Note that giving the public role this access level, it can view many other options on the superset portal via a direct link. This is not ideal. Another option is to only give the public role access to specific things. The bare minimum to give anyone access to the dashboard requires:
+    - Can read on Chart
+    - Can read on Dashboard
+    - Can explore json on Superset
+    - Can dashboard on Superset
+    - Datasource access on [<database>].[<dataset>]
 
 #+begin_src yaml
 FEATURE_FLAG = {
@@ -52,7 +59,7 @@ FAVICONS = [{"href": "https://www.uhasselt.be//media/ipqjpjbk/favicon_uhasselt.j
   - ~SUPERSET_SECRET_KEY=x~; For session cookie, encrypting data; recommended to change this.
   - ~SUPERSET_CONFIG_PATH=/~; Custom path to where ~superset_config.py~ should be stored in the container (can be mounted to local file)
 - Some other variable that can be used in ~superset_config.py~
-  - ~SQLALCHEMY_DATABASE_URI = 'sqlite:////path/to/superset.db'~; If all the Superset data need to be stored on another database, the new path can be given here.
+  - ~SQLALCHEMY_DATABASE_URI=/path/to/database.db~; If all the Superset data need to be stored on another database, the new path can be given here.
 
 ** Users and Roles
 - Users:
