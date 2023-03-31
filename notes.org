@@ -22,13 +22,16 @@
 - Some changes being made here:
   - Enabling feature flag ~EMBEDDED_SUPERSET~. This will make it possible to generate an ID that can be used by the SDK. This is not required when using the standalone link.
   - Giving the Public role the same privileges as Gamma. This will make it so the Public role does not require to log in to view charts (and solves the issue with being prompted to log in). Note that this role still needs access to the datasource/dataset itself, before the chart/dashboard will actually load.
-  - Note that giving the public role this access level, it can view many other options on the superset portal via a direct link. This is not ideal. Another option is to only give the public role access to specific things. The bare minimum to give anyone access to the dashboard requires:
+  - Note that giving the public role this access level, it can view many other options on the superset portal via a direct link. This is not ideal. Another option is to only give the public role access to specific things. The bare minimum to give anyone access to the dashboard or charts requires permission of:
     - Can read on Chart
-    - Can read on Dashboard
     - Can explore json on Superset
-    - Can dashboard on Superset
     - Datasource access on [<database>].[<dataset>]
-
+    - Additionaly for dashboards:
+      - Can read on Dashboard
+      - Can dashboard on Superset
+    - Additionally for embedded charts:
+      - Can read on Explore
+    
 #+begin_src yaml
 FEATURE_FLAG = {
   "EMBEDDED_SUPERSET": True
