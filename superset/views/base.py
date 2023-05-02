@@ -116,6 +116,9 @@ FRONTEND_CONF_KEYS = (
     "HTML_SANITIZATION_SCHEMA_EXTENSIONS",
     "WELCOME_PAGE_LAST_TAB",
     "VIZ_TYPE_DENYLIST",
+    "ALERT_REPORTS_DEFAULT_CRON_VALUE",
+    "ALERT_REPORTS_DEFAULT_RETENTION",
+    "ALERT_REPORTS_DEFAULT_WORKING_TIMEOUT",
 )
 
 logger = logging.getLogger(__name__)
@@ -425,6 +428,7 @@ def cached_common_bootstrap_data(user: User) -> Dict[str, Any]:
         "conf": frontend_config,
         "locale": locale,
         "language_pack": get_language_pack(locale),
+        "d3_format": conf.get("D3_FORMAT"),
         "feature_flags": get_feature_flags(),
         "extra_sequential_color_schemes": conf["EXTRA_SEQUENTIAL_COLOR_SCHEMES"],
         "extra_categorical_color_schemes": conf["EXTRA_CATEGORICAL_COLOR_SCHEMES"],
