@@ -101,9 +101,11 @@ class CeleryConfig(object):
 CELERY_CONFIG = CeleryConfig
 
 # Make dashboards embeddable (via api token)
+# Make JavaScript available (for tooltips)
 FEATURE_FLAGS = {
     "ALERT_REPORTS": True,
-    "EMBEDDED_SUPERSET": True
+    "EMBEDDED_SUPERSET": True,
+    "ENABLE_JAVASCRIPT_CONTROLS": True
 }
 ALERT_REPORTS_NOTIFICATION_DRY_RUN = True
 WEBDRIVER_BASEURL = "http://superset:8088/"

@@ -21,6 +21,7 @@
   - Edits made in this file will often require a reinitialization in the container (~$ docker exec -it superset_app sh~), dont with ~$ superset init~.
 - Some changes being made here:
   - Enabling feature flag ~EMBEDDED_SUPERSET~. This will make it possible to generate an ID that can be used by the SDK. This is not required when using the standalone link.
+  - Enabling feature flag ~ENABLE_JAVASCRIPT_CONTROLS~. This will make it possible to edit tooltips with custom values. More on this later.
   - Giving the Public role the same privileges as Gamma. This will make it so the Public role does not require to log in to view charts (and solves the issue with being prompted to log in). Note that this role still needs access to the datasource/dataset itself, before the chart/dashboard will actually load.
   - Note that giving the public role this access level, it can view many other options on the superset portal via a direct link. This is not ideal. Another option is to only give the public role access to specific things. The bare minimum to give anyone access to the dashboard or charts requires permission of:
     - Can read on Chart
@@ -34,7 +35,8 @@
     
 #+begin_src yaml
 FEATURE_FLAG = {
-  "EMBEDDED_SUPERSET": True
+  "EMBEDDED_SUPERSET": True,
+  "ENABLE_JAVASCRIPT_CONTROLS": True
 }
 PUBLIC_ROLE_LIKE = "Gamma"
 #+end_src
@@ -57,7 +59,7 @@ FAVICONS = [{"href": "https://www.uhasselt.be//media/ipqjpjbk/favicon_uhasselt.j
 
 *** Environment
 - Other than using ~superset_config.py~, some aspect of Superset can be configured through Docker's environmental variables. These are different for dev and non-dev versions. The ~.env~ files can be found under ~/docker/~.
-- Some useful docker environment variables (that can also be declared in ~superset_config.py~ wihtout "SUPERSET_"):
+- Some useful docker environment variables (that can also be declared in ~superset_config.py~ without "SUPERSET_"):
   - ~SUPERSET_LOAD_EXAMPLES=no~; Load dummy datasets/charts/dashboards or not
   - ~SUPERSET_SECRET_KEY=x~; For session cookie, encrypting data; recommended to change this.
   - ~SUPERSET_CONFIG_PATH=/~; Custom path to where ~superset_config.py~ should be stored in the container (can be mounted to local file)
@@ -94,6 +96,9 @@ FAVICONS = [{"href": "https://www.uhasselt.be//media/ipqjpjbk/favicon_uhasselt.j
 
 ** Customization
 - Superset provides 60 different chart types out of the box which are very customizable. Metrics, dimensions, filters, sorting, limits and more can be used to visualise data. Many charts also have seperate customization menus where color, order, axis, orientations and more can be changed. Superset also allows SQL expressions. This means you have even more control over how data is grouped and visualized.
+  - When editing a chart, if customization is available, at the top of the filter menu there should be two menus available, 'data' and 'customize'. Under 'customize', you can change quite a lot about the chart itself.
+  - The chart data itself can also be changed, either by making a custom dataset, or via custom sql. This custom sql can be changed via arrow next to the selected columns used to filter. An example of a custom sql query ~case when AGE between "20" and "30" then "20-30" end~. This will also change the tooltip. Unfortunatly this is not really useful for map data, therefore the next option...
+  - When ~ENABLE_JAVASCRIPT_CONTROLS~ is enabled, it is possible to generate custom tooltips via JavaScript for DeckGL maps. When editing the chart, scroll down to 'Advanced', in here select the data columns you want to filter by. Under 'Javascript tooltips generator' write your function. For example ~d => `${d.object.extraProps.COLUMN}`~ or if you want some more control use html elements ~d => `<div>${d.object.extraProps.COLUMN}</div>`~.
 - It should be possible to import or develop other charts using custom viz plugins.
 - Charts can be used to build out a dashboard. On this dashboard, charts can be place and arranged. A global filter can also set for the dashboard.
 - The CSS of these dashboards can also be changed to your liking. A basic example with a few tweaks that are pretty much a requirement when making the dashboard public:
