@@ -65,6 +65,7 @@ FAVICONS = [{"href": "https://www.uhasselt.be//media/ipqjpjbk/favicon_uhasselt.j
   - ~SUPERSET_CONFIG_PATH=/~; Custom path to where ~superset_config.py~ should be stored in the container (can be mounted to local file)
 - Some other variable that can be used in ~superset_config.py~
   - ~SQLALCHEMY_DATABASE_URI=/path/to/database.db~; If all the Superset data need to be stored on another database, the new path can be given here.
+- To be able to display data using DeckGL charts, a Mapbox API key is required. This can also be entered in the ~.env~ files or in ~superset_config.py~. The key can be generated on mapbox.com and can be entered under the variable ~MAPBOX_API_KEY = "x"~. For obvious reasons this is not commited to this repo. More info about Mapbox and DeckGL can be found below.
 
 ** Users and Roles
 - Users:
@@ -114,3 +115,15 @@ body {
   pointer-events: none;
 } /*disable menu editor being clickable */
 #+end_src
+
+** Mapbox
+- Due to our use case, map data might be very important. Superset comes with some generic maps out of the box, such as all the countries in the world or provinces/states per country. For these maps Mapbox is not required, but ofcourse might limit the use case.
+- Luckily Superset also provides some charts that make use of DeckGL. If we want to use these charts, some additional data might be needed to have viable charts.
+- Most DeckGL charts work with a couple of data point, either longitude & latitude or with polygons.
+  - Longitute and latitude can be generalized depending on a country, province or municipality. This dataset can then be linked with the actual dataset used in the dashboard.
+  - Polygons are a bit more difficult (but can also be linked with the actual dataset if a basic polygon dataset is available), but a better way to show shapes of locations. It's also visibly easier to analyse data when looking at a map. There are three options on how these polygons are encoded:
+    - JSON: This might be the best use case for us. It it just a string of coordinates that creates a shape. This is great to mark municipalities. I believe these can be extracted from geojson file. It's then as simple as adding them to a dataset. For example column 1 is the city, column 2 is the geojson ~Diepenbeek, [[[[x,y],[x,y]]]]~. We might be able to convert shapefiles to geojson.
+    - Polyline: Possibly not relevent for us. This will draw a line on a map. Presumably useful for paths and traffic.
+    - Geohash: This will create squares over areas. Possibly not very useful since the accuracy is debatable, not very precise, and the Screen Grid chart does some something similar to display data.
+- The data will always be displayed but to get a visible map with the DeckGL maps, an active API key needs to be present when using superset. This key can be given in the ~.env~ file under ~MAPBOX_API_KEY~.
+- Mapbox is a paid service but provides a free tier. Within the free tier most features are not very relevant to us. One thing to keep in mind is the 'Mapbox GL JS Map loads for Web' limit. The free tier is limited to 50000 monthly loads, meaning, for all the chart on a website, no more than 50000 of these DeckGL charts can be loaded and viewed. I'm unsure of what happens when this limit is exceeded but I assume superset will respond the same as when no key is given, the data loads but the map does not. This might not be a problem when using JSON Polygons.
